@@ -43,10 +43,9 @@
         const usuariosValidos = {
           "Santiago G": "1234",
           "mecanico": "moto2025",
-          "cliente": "taller"
-          "santi" : "giraldo"
+          "administrador": "0000"
         };
-
+        
         if (usuariosValidos[usuario] && usuariosValidos[usuario] === contrasena) {
           localStorage.setItem("usuarioActivo", usuario);
           window.location.href = "principal.html";
