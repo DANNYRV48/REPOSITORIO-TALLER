@@ -1,0 +1,91 @@
+/* === Estilos Inventario === */
+.inventario-contenedor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  width: 90%;
+  max-width: 900px;
+  margin: auto;
+  color: white;
+}
+
+.formulario-inventario {
+  background-color: rgba(31, 28, 28, 0.7);
+  padding: 25px;
+  border-radius: 20px;
+  width: 100%;
+  box-shadow: 0 0 10px black;
+}
+
+.formulario-inventario h2,
+.tabla-inventario h2 {
+  text-align: center;
+  margin-bottom: 15px;
+  text-shadow: 2px 2px 4px black;
+}
+
+.formulario-inventario form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
+.formulario-inventario input,
+.formulario-inventario select {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  width: 200px;
+}
+
+.formulario-inventario button {
+  background: linear-gradient(135deg, #ff3b3b, #b30000);
+  border: none;
+  color: white;
+  font-family: 'Bebas Neue', sans-serif;
+  padding: 10px 25px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+  letter-spacing: 1px;
+}
+
+.formulario-inventario button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(255, 59, 59, 0.7);
+}
+
+/* Tabla */
+.tabla-inventario {
+  width: 100%;
+  background-color: rgba(31, 28, 28, 0.7);
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 0 10px black;
+}
+
+.tabla-inventario table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.tabla-inventario th,
+.tabla-inventario td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.entrada {
+  color: #3cff3c;
+  font-weight: bold;
+}
+
+.salida {
+  color: #ff3b3b;
+  font-weight: bold;
+}

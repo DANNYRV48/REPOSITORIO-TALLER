@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | GMA Taller</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  /* FONDO CON IMAGEN Y FILTRO OSCURO */
+  body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: white;
+    min-height: 100vh;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: url('imagenes/menum.jpg') no-repeat center center/cover;
+    z-index: -2;
+  }
+  body::after {
+    content:"";
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.6); /* filtro oscuro */
+    z-index: -1;
+  }
+
+  header {
+    text-align: center;
+    padding: 20px;
+    background: rgba(0,0,0,0.5);
+    box-shadow: 0 2px 8px black;
+  }
+  header h1 { margin: 0; font-size: 2.5rem; font-weight: 600; color: #fff;}
+  header p { margin: 5px 0 0 0; font-size: 1rem; color: #ccc; }
+
+  main {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    background: rgba(43,43,43,0.85);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 10px #000;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .card:hover { transform: translateY(-5px); background: rgba(58,58,58,0.95);}
+  .card i { font-size: 2rem; margin-bottom: 10px; color: #e74c3c; }
+  .card h3 { margin: 10px 0 5px 0; font-size: 1.5rem; color: #fff; }
+  .card p { margin: 0; font-size: 1rem; color: #ccc; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    color: #fff;
+  }
+  table th, table td { border: 1px solid #555; padding: 8px; text-align: center; }
+  table th { background: #000; color: #fff; }
+
+  .filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  .filtros select, .filtros input, .filtros button {
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: none;
+    background: #1c1c1c;
+    color: #fff;
+    cursor: pointer;
+  }
+  .filtros button:hover { background: #c0392b; }
+
+  footer {
+    text-align: center;
+    padding: 15px;
+    background: rgba(0,0,0,0.7);
+    margin-top: 20px;
+  }
+  footer button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: #e74c3c;
+    color: white;
+    font-weight: bold;
+  }
+  footer button:hover { background: #c0392b; }
+
+  form input, form select, form button {
+    width: 90%;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+  }
+  form input, form select { background: #1c1c1c; color: #fff; }
+  form button {
+    background: #e74c3c;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  form button:hover { background: #c0392b; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📊 Dashboard Taller GMA</h1>
+  <p id="usuario-bienvenida"></p>
+</header>
+
+<main>
+  <!-- Tarjetas resumen -->
+  <div class="card"><i class="fas fa-truck"></i><h3>Proveedores</h3><p id="totalProveedores">0</p></div>
+  <div class="card"><i class="fas fa-boxes"></i><h3>Productos</h3><p id="totalProductos">0</p></div>
+  <div class="card"><i class="fas fa-receipt"></i><h3>Ventas</h3><p id="totalVentas">0</p></div>
+  <div class="card"><i class="fas fa-coins"></i><h3>Ganancia total</h3><p id="totalGanancia">0</p></div>
+
+  <!-- Formulario registrar proveedor -->
+  <div class="card">
+    <h3>Registrar proveedor</h3>
+    <form id="formProveedor">
+      <input type="text" placeholder="Nombre del proveedor" required>
+      <input type="text" placeholder="Teléfono o contacto" required>
+      <input type="text" placeholder="Dirección" required>
+      <button type="submit">Guardar proveedor</button>
+    </form>
+  </div>
+
+  <!-- Formulario registrar producto/compra -->
+  <div class="card">
+    <h3>Registrar producto</h3>
+    <form id="formProducto">
+      <select id="selectProveedorProducto" required>
+        <option value="">Seleccionar proveedor</option>
+      </select>
+      <input type="text" placeholder="Producto" required>
+      <input type="number" placeholder="Cantidad" required>
+      <input type="number" placeholder="Precio compra" required>
+      <input type="number" placeholder="Precio venta" required>
+      <button type="submit">Registrar producto</button>
+    </form>
+  </div>
+
+  <!-- Formulario registrar venta -->
+  <div class="card">
+    <h3>Registrar venta</h3>
+    <form id="formVenta">
+      <select id="selectProveedorVenta" required>
+        <option value="">Seleccionar proveedor</option>
+      </select>
+      <select id="selectProductoVenta" required>
+        <option value="">Seleccionar producto</option>
+      </select>
+      <input type="number" placeholder="Cantidad a vender" required>
+      <button type="submit">Registrar venta</button>
+    </form>
+  </div>
+
+  <!-- Tarjeta Inventario actualizado -->
+  <div class="card" style="grid-column:1/-1;">
+    <h3>Inventario Actualizado</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Proveedor</th>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio compra</th>
+          <th>Precio venta</th>
+          <th>Ganancia/u</th>
+        </tr>
+      </thead>
+      <tbody id="tablaInventario"></tbody>
+    </table>
+  </div>
+
+  <!-- Informe movimientos con filtros -->
+  <div class="card" style="grid-column:1/-1;">
+    <h3>Informe de Movimientos</h3>
+    <div class="filtros">
+      <select id="filtroProveedor"><option value="">Todos los proveedores</option></select>
+      <select id="filtroProducto"><option value="">Todos los productos</option></select>
+      <select id="filtroTipo">
+        <option value="">Todos</option>
+        <option value="Compra">Compra</option>
+        <option value="Venta">Venta</option>
+      </select>
+      <input type="date" id="filtroFecha">
+      <button onclick="aplicarFiltros()">Aplicar</button>
+      <button onclick="limpiarFiltros()">Limpiar</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Proveedor</th>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio Compra</th>
+          <th>Precio Venta</th>
+          <th>Ganancia</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody id="tablaInforme"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  <button onclick="window.location.href='principal.html'">⬅ Volver al menú</button>
+</footer>
+
+<script>
+  const usuario = localStorage.getItem("usuarioActivo");
+  if(!usuario) window.location.href='index.html';
+  else document.getElementById("usuario-bienvenida").textContent="Bienvenido, "+usuario+" 👋";
+
+  let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
+  let movimientos = JSON.parse(localStorage.getItem("movimientos")) || [];
+
+  const selectProveedorProducto = document.getElementById("selectProveedorProducto");
+  const selectProveedorVenta = document.getElementById("selectProveedorVenta");
+  const selectProductoVenta = document.getElementById("selectProductoVenta");
+  const tablaInventario = document.getElementById("tablaInventario");
+  const tablaInforme = document.getElementById("tablaInforme");
+  const filtroProveedor = document.getElementById("filtroProveedor");
+  const filtroProducto = document.getElementById("filtroProducto");
+  const filtroTipo = document.getElementById("filtroTipo");
+  const filtroFecha = document.getElementById("filtroFecha");
+
+  function actualizarSelects(){
+    selectProveedorProducto.innerHTML = '<option value="">Seleccionar proveedor</option>';
+    selectProveedorVenta.innerHTML = '<option value="">Seleccionar proveedor</option>';
+    filtroProveedor.innerHTML = '<option value="">Todos los proveedores</option>';
+    proveedores.forEach(p=>{
+      selectProveedorProducto.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
+      selectProveedorVenta.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
+      filtroProveedor.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
+    });
+  }
+
+  // ... Aquí agregas la lógica para registrar compra, venta, actualizar inventario e informes como en la versión anterior
+</script>
+
+</body>
+</html>

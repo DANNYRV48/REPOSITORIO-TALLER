@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Productos | GMA Taller</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="principal.css">
+<style>
+  body { font-family: 'Poppins', sans-serif; margin:0; padding:0; color:white; min-height:100vh; position:relative;}
+  body::before { content:""; position:fixed; top:0; left:0; width:100%; height:100%; background:url('imagenes/menum.jpg') no-repeat center center/cover; z-index:-2;}
+  body::after { content:""; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:-1;}
+
+  header { text-align:center; padding:20px; background: rgba(0,0,0,0.5); box-shadow:0 2px 8px black;}
+  header h1 { margin:0; font-size:2.5rem;}
+  header p { margin:5px 0 0 0; font-size:1rem; color:#ccc; }
+
+  .card { background: rgba(43,43,43,0.85); border-radius:15px; padding:20px; margin:20px; box-shadow:0 4px 10px #000;}
+  .busqueda { width: 100%; padding:10px; border-radius:10px; border:none; margin-bottom:15px; background:#1c1c1c; color:white; }
+  .lista-sugerencias { background:#1c1c1c; border-radius:10px; max-height:150px; overflow-y:auto; margin-bottom:15px; }
+  .lista-sugerencias div { padding:8px; cursor:pointer; border-bottom:1px solid #555;}
+  .lista-sugerencias div:hover { background:#e74c3c; }
+
+  table { width:100%; border-collapse:collapse; color:white; }
+  table th, table td { border:1px solid #555; padding:8px; text-align:center; }
+  table th { background:#000; }
+
+  .botones { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; }
+  .botones button { flex:1; padding:10px; border-radius:10px; border:none; cursor:pointer; background:#e74c3c; color:white; font-weight:bold; transition:0.2s; }
+  .botones button:hover { background:#c0392b; }
+
+  input[type=number] { width:60px; padding:5px; border-radius:5px; border:none; background:#1c1c1c; color:white; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧰 Productos</h1>
+  <p id="usuario-bienvenida"></p>
+</header>
+
+<main>
+  <div class="card">
+    <input type="text" id="busquedaProducto" class="busqueda" placeholder="Buscar producto...">
+    <div id="sugerencias" class="lista-sugerencias"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Proveedor</th>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio compra</th>
+          <th>Precio venta</th>
+          <th>Ganancia/u</th>
+          <th>Vender</th>
+        </tr>
+      </thead>
+      <tbody id="tablaProductos"></tbody>
+    </table>
+  </div>
+
+  <div class="botones">
+    <button onclick="window.location.href='dashboard.html'">⬅ Volver al Dashboard</button>
+    <button onclick="imprimirTabla()">🖨 Imprimir</button>
+  </div>
+</main>
+
+<script>
+const usuario = localStorage.getItem("usuarioActivo");
+if(!usuario) window.location.href='index.html';
+else document.getElementById("usuario-bienvenida").textContent="Bienvenido, "+usuario+" 👋";
+
+let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
+let tablaProductos = document.getElementById("tablaProductos");
+let busquedaProducto = document.getElementById("busquedaProducto");
+let sugerencias = document.getElementById("sugerencias");
+
+function mostrarProductos(filtro="") {
+  tablaProductos.innerHTML = "";
+  let productosMostrados = [];
+
+  proveedores.forEach(p => {
+    if(p.productos && p.productos.length){
+      p.productos.forEach(prod => {
+        if(prod.nombre.toLowerCase().includes(filtro.toLowerCase())){
+          const gananciaU = prod.precioVenta - prod.precioCompra;
+          tablaProductos.innerHTML += `<tr>
+            <td>${p.nombre}</td>
+            <td>${prod.nombre}</td>
+            <td>${prod.cantidad}</td>
+            <td>${prod.precioCompra}</td>
+            <td>${prod.precioVenta}</td>
+            <td>${gananciaU}</td>
+            <td><input type="number" min="1" max="${prod.cantidad}" value="1" onchange="registrarVenta('${p.nombre}','${prod.nombre}',this.value)"></td>
+          </tr>`;
+          productosMostrados.push(prod.nombre);
+        }
+      });
+    }
+  });
+
+  // Mostrar sugerencias
+  sugerencias.innerHTML = "";
+  productosMostrados.slice(0,5).forEach(nombre=>{
+    let div = document.createElement("div");
+    div.textContent = nombre;
+    div.onclick = ()=>{ busquedaProducto.value = nombre; mostrarProductos(nombre); };
+    sugerencias.appendChild(div);
+  });
+}
+
+busquedaProducto.addEventListener("input", ()=>{
+  mostrarProductos(busquedaProducto.value);
+});
+
+// Función de venta
+function registrarVenta(proveedor, producto, cantidad) {
+  cantidad = parseInt(cantidad);
+  if(cantidad<=0) return;
+
+  // Buscar producto
+  let pObj = proveedores.find(p=>p.nombre===proveedor);
+  if(!pObj) return;
+  let prodObj = pObj.productos.find(prod=>prod.nombre===producto);
+  if(!prodObj) return;
+
+  if(cantidad>prodObj.cantidad){
+    alert("No hay suficiente stock");
+    mostrarProductos(busquedaProducto.value);
+    return;
+  }
+
+  prodObj.cantidad -= cantidad;
+
+  // Guardar movimiento
+  let movimientos = JSON.parse(localStorage.getItem("movimientos")) || [];
+  movimientos.push({
+    fecha: new Date().toLocaleDateString(),
+    proveedor,
+    producto,
+    cantidad,
+    precioCompra: prodObj.precioCompra,
+    precioVenta: prodObj.precioVenta,
+    ganancia: (prodObj.precioVenta - prodObj.precioCompra)*cantidad,
+    tipo: "Venta"
+  });
+  localStorage.setItem("movimientos", JSON.stringify(movimientos));
+  localStorage.setItem("proveedores", JSON.stringify(proveedores));
+
+  mostrarProductos(busquedaProducto.value);
+}
+
+
+
+// Inicial
+mostrarProductos();
+</script>
+
+</body>
+</html>

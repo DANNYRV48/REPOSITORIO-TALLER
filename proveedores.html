@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proveedores | GMA Taller</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="principal.css">
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  margin:0; padding:0; color:white; min-height:100vh; position:relative;
+}
+body::before {
+  content:""; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:url('imagenes/moto-fondo.jpg') no-repeat center center/cover; z-index:-2;
+}
+body::after {
+  content:""; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.6); z-index:-1;
+}
+
+header { text-align:center; padding:20px; background: rgba(0,0,0,0.5); box-shadow:0 2px 8px black;}
+header h1 { margin:0; font-size:2.5rem;}
+header p { margin:5px 0 0 0; font-size:1rem; color:#ccc; }
+
+.card { background: rgba(43,43,43,0.85); border-radius:15px; padding:20px; margin:20px; box-shadow:0 4px 10px #000;}
+input, select { width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:none; background:#1c1c1c; color:white; }
+button { padding:10px; border-radius:10px; border:none; background:#e74c3c; color:white; font-weight:bold; cursor:pointer; transition:0.2s; }
+button:hover { background:#c0392b; }
+table { width:100%; border-collapse:collapse; color:white; }
+table th, table td { border:1px solid #555; padding:8px; text-align:center; }
+table th { background:#000; }
+
+.botones { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; }
+.botones button { flex:1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🚚 Proveedores</h1>
+  <p id="usuario-bienvenida"></p>
+</header>
+
+<main>
+  <!-- Registro de proveedor -->
+  <div class="card">
+    <h2>Registrar Proveedor</h2>
+    <input type="text" id="nuevoProveedor" placeholder="Nombre del proveedor">
+    <button onclick="registrarProveedor()">Registrar</button>
+  </div>
+
+  <!-- Selección de proveedor para informe -->
+  <div class="card">
+    <h2>Informe de Movimientos</h2>
+    <select id="selectProveedor" onchange="mostrarMovimientos()">
+      <option value="">-- Todos los proveedores --</option>
+    </select>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Proveedor</th>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio Compra</th>
+          <th>Precio Venta</th>
+          <th>Ganancia Total</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody id="tablaMovimientos"></tbody>
+    </table>
+  </div>
+
+  <div class="botones">
+    <button onclick="window.location.href='dashboard.html'">⬅ Volver al Dashboard</button>
+    <button onclick="imprimirTabla()">🖨 Imprimir Informe</button>
+  </div>
+</main>
+
+<script>
+const usuario = localStorage.getItem("usuarioActivo");
+if(!usuario) window.location.href='index.html';
+else document.getElementById("usuario-bienvenida").textContent="Bienvenido, "+usuario+" 👋";
+
+let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
+let movimientos = JSON.parse(localStorage.getItem("movimientos")) || [];
+const selectProveedor = document.getElementById("selectProveedor");
+const tablaMovimientos = document.getElementById("tablaMovimientos");
+
+// Función registrar proveedor
+function registrarProveedor(){
+  const nombre = document.getElementById("nuevoProveedor").value.trim();
+  if(!nombre) { alert("Ingrese un nombre"); return; }
+
+  // Verificar duplicados
+  if(proveedores.some(p=>p.nombre.toLowerCase()===nombre.toLowerCase())){
+    alert("Proveedor ya registrado");
+    return;
+  }
+
+  proveedores.push({nombre:nombre, productos:[]});
+  localStorage.setItem("proveedores", JSON.stringify(proveedores));
+  actualizarSelect();
+  document.getElementById("nuevoProveedor").value="";
+  alert("Proveedor registrado correctamente");
+}
+
+// Actualizar select con proveedores
+function actualizarSelect(){
+  selectProveedor.innerHTML = `<option value="">-- Todos los proveedores --</option>`;
+  proveedores.forEach(p=>{
+    const option = document.createElement("option");
+    option.value = p.nombre;
+    option.textContent = p.nombre;
+    selectProveedor.appendChild(option);
+  });
+}
+
+// Mostrar movimientos
+function mostrarMovimientos(){
+  const filtro = selectProveedor.value;
+  tablaMovimientos.innerHTML="";
+  movimientos.forEach(m=>{
+    if(!filtro || m.proveedor===filtro){
+      tablaMovimientos.innerHTML+=`<tr>
+        <td>${m.fecha}</td>
+        <td>${m.proveedor}</td>
+        <td>${m.producto}</td>
+        <td>${m.cantidad}</td>
+        <td>${m.precioCompra}</td>
+        <td>${m.precioVenta}</td>
+        <td>${m.ganancia}</td>
+        <td>${m.tipo}</td>
+      </tr>`;
+    }
+  });
+}
+
+// Imprimir tabla
+function imprimirTabla(){
+  window.print();
+}
+
+// Inicializar
+actualizarSelect();
+mostrarMovimientos();
+</script>
+
+</body>
+</html>

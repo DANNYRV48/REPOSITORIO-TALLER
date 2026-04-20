@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Servicios Actuales | GMA Taller</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="principal.css">
+<style>
+body { font-family:'Poppins',sans-serif; margin:0; padding:0; color:white; min-height:100vh; position:relative;}
+body::before { content:""; position:fixed; top:0; left:0; width:100%; height:100%; background:url('imagenes/moto-fondo.jpg') no-repeat center center/cover; z-index:-2;}
+body::after { content:""; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:-1;}
+
+header { text-align:center; padding:20px; background: rgba(0,0,0,0.5); box-shadow:0 2px 8px black;}
+header h1 { margin:0; font-size:2.5rem;}
+header p { margin:5px 0 0 0; font-size:1rem; color:#ccc; }
+
+.card { background: rgba(43,43,43,0.85); border-radius:15px; padding:20px; margin:20px; box-shadow:0 4px 10px #000;}
+input, select { width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:none; background:#1c1c1c; color:white; }
+button { padding:10px; border-radius:10px; border:none; background:#e74c3c; color:white; font-weight:bold; cursor:pointer; transition:0.2s; }
+button:hover { background:#c0392b; }
+table { width:100%; border-collapse:collapse; color:white; }
+table th, table td { border:1px solid #555; padding:8px; text-align:center; }
+table th { background:#000; }
+
+.botones { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; }
+.botones button { flex:1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛠 Servicios Actuales</h1>
+  <p id="usuario-bienvenida"></p>
+</header>
+
+<main>
+  <!-- Registrar servicio -->
+  <div class="card">
+    <h2>Registrar Servicio</h2>
+    <input type="text" id="cliente" placeholder="Nombre del cliente">
+    <input type="text" id="tipoServicio" placeholder="Tipo de servicio">
+    <input type="number" id="costoManoObra" placeholder="Costo mano de obra" min="0" value="0">
+    <select id="selectProducto">
+      <option value="">-- Seleccionar producto --</option>
+    </select>
+    <input type="number" id="cantidadProducto" min="1" value="1" placeholder="Cantidad">
+    <button onclick="agregarProductoServicio()">Agregar producto</button>
+
+    <h3>Productos agregados</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio Venta</th>
+          <th>Subtotal</th>
+          <th>Ganancia</th>
+        </tr>
+      </thead>
+      <tbody id="productosServicio"></tbody>
+    </table>
+    <button onclick="guardarServicio()">Guardar Servicio</button>
+  </div>
+
+  <!-- Servicios activos -->
+  <div class="card">
+    <h2>Servicios Activos</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Tipo Servicio</th>
+          <th>Productos</th>
+          <th>Mano de obra</th>
+          <th>Total Servicio</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaServicios"></tbody>
+    </table>
+  </div>
+
+  <div class="botones">
+    <button onclick="window.location.href='dashboard.html'">⬅ Volver al Dashboard</button>
+    <button onclick="exportarExcel()">📊 Exportar Excel</button>
+  </div>
+</main>
+
+<script>
+// Usuario
+const usuario = localStorage.getItem("usuarioActivo");
+if(!usuario) window.location.href='index.html';
+else document.getElementById("usuario-bienvenida").textContent="Bienvenido, "+usuario+" 👋";
+
+// Inicializar proveedores y productos de prueba si no existen
+if(!localStorage.getItem("proveedores")){
+  const proveedores = [
+    {nombre:"Proveedor A", productos:[{nombre:"Aceite", cantidad:20, precioCompra:5000, precioVenta:8000}]},
+    {nombre:"Proveedor B", productos:[{nombre:"Frenos", cantidad:15, precioCompra:12000, precioVenta:18000}]}
+  ];
+  localStorage.setItem("proveedores", JSON.stringify(proveedores));
+}
+
+if(!localStorage.getItem("servicios")){
+  localStorage.setItem("servicios", JSON.stringify([]));
+}
+
+// Cargar proveedores y productos
+let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
+let productosDisponibles = [];
+proveedores.forEach(p=>{
+  if(p.productos) productosDisponibles.push(...p.productos.map(prod=>({nombre:prod.nombre, precioVenta:prod.precioVenta, proveedor:p.nombre, cantidad:prod.cantidad, precioCompra:prod.precioCompra})));
+});
+
+// Llenar select de productos
+const selectProducto = document.getElementById("selectProducto");
+function llenarSelect(){
+  selectProducto.innerHTML = '<option value="">-- Seleccionar producto --</option>';
+  productosDisponibles.forEach(prod=>{
+    const option = document.createElement("option");
+    option.value = prod.nombre;
+    option.textContent = `${prod.nombre} (Stock: ${prod.cantidad})`;
+    selectProducto.appendChild(option);
+  });
+}
+llenarSelect();
+
+let productosServicio = [];
+const tbodyProductos = document.getElementById("productosServicio");
+
+// Agregar producto al servicio
+function agregarProductoServicio(){
+  const prodNombre = selectProducto.value;
+  const cantidad = parseInt(document.getElementById("cantidadProducto").value);
+  if(!prodNombre || cantidad<=0) { alert("Seleccione producto y cantidad válida"); return; }
+  const prodObj = productosDisponibles.find(p=>p.nombre===prodNombre);
+  if(!prodObj || cantidad>prodObj.cantidad){ alert("No hay suficiente stock"); return; }
+
+  prodObj.cantidad -= cantidad;
+
+  const subtotal = prodObj.precioVenta * cantidad;
+  const ganancia = (prodObj.precioVenta - prodObj.precioCompra) * cantidad;
+  productosServicio.push({nombre:prodNombre, cantidad, precioVenta:prodObj.precioVenta, subtotal, ganancia});
+  renderProductosServicio();
+  llenarSelect();
+}
+
+// Mostrar productos agregados
+function renderProductosServicio(){
+  tbodyProductos.innerHTML = "";
+  productosServicio.forEach(p=>{
+    tbodyProductos.innerHTML += `<tr>
+      <td>${p.nombre}</td>
+      <td>${p.cantidad}</td>
+      <td>${p.precioVenta}</td>
+      <td>${p.subtotal}</td>
+      <td>${p.ganancia}</td>
+    </tr>`;
+  });
+}
+
+// Guardar servicio
+let servicios = JSON.parse(localStorage.getItem("servicios")) || [];
+function guardarServicio(){
+  const cliente = document.getElementById("cliente").value.trim();
+  const tipo = document.getElementById("tipoServicio").value.trim();
+  const manoObra = parseFloat(document.getElementById("costoManoObra").value) || 0;
+  if(!cliente || !tipo || productosServicio.length===0){ alert("Complete todos los campos y agregue al menos un producto"); return; }
+
+  const totalProductos = productosServicio.reduce((acc,p)=>acc+p.subtotal,0);
+  const totalServicio = totalProductos + manoObra;
+  servicios.push({cliente, tipoServicio: tipo, productos: productosServicio, totalServicio, manoObra, fecha:new Date().toLocaleDateString()});
+  localStorage.setItem("servicios", JSON.stringify(servicios));
+
+  // Reducir stock real en proveedores
+  productosServicio.forEach(p=>{
+    proveedores.forEach(pr=>{
+      const prodObj = pr.productos.find(prod=>prod.nombre===p.nombre);
+      if(prodObj) prodObj.cantidad -= p.cantidad;
+    });
+  });
+  localStorage.setItem("proveedores", JSON.stringify(proveedores));
+
+  productosServicio = [];
+  renderProductosServicio();
+  renderServicios();
+  llenarSelect();
+  alert("Servicio registrado correctamente");
+}
+
+// Mostrar servicios
+const tablaServicios = document.getElementById("tablaServicios");
+function renderServicios(){
+  tablaServicios.innerHTML="";
+  servicios.forEach((s,index)=>{
+    const listaProductos = s.productos.map(p=>`${p.nombre} x${p.cantidad}`).join(", ");
+    tablaServicios.innerHTML += `<tr>
+      <td>${s.cliente}</td>
+      <td>${s.tipoServicio}</td>
+      <td>${listaProductos}</td>
+      <td>${s.manoObra}</td>
+      <td>${s.totalServicio}</td>
+      <td>
+        <button onclick="imprimirFactura(${index})">🖨 Factura</button>
+      </td>
+    </tr>`;
+  });
+}
+
+// Imprimir factura de un servicio
+function imprimirFactura(index){
+  const s = servicios[index];
+  let ventana = window.open('', 'Factura', 'width=600,height=600');
+  ventana.document.write(`<h1>Factura Servicio - ${s.cliente}</h1>`);
+  ventana.document.write(`<p>Tipo de Servicio: ${s.tipoServicio}</p>`);
+  ventana.document.write(`<p>Fecha: ${s.fecha}</p>`);
+  ventana.document.write('<table border="1" cellspacing="0" cellpadding="5"><tr><th>Producto</th><th>Cantidad</th><th>Precio Venta</th><th>Subtotal</th><th>Ganancia</th></tr>');
+  s.productos.forEach(p=>{
+    ventana.document.write(`<tr>
+      <td>${p.nombre}</td><td>${p.cantidad}</td><td>${p.precioVenta}</td><td>${p.subtotal}</td><td>${p.ganancia}</td>
+    </tr>`);
+  });
+  ventana.document.write(`</table><p>Mano de obra: ${s.manoObra}</p>`);
+  ventana.document.write(`<h3>Total Servicio: ${s.totalServicio}</h3>`);
+  ventana.document.write('<button onclick="window.print()">Imprimir</button>');
+  ventana.document.close();
+}
+
+// Exportar Excel
+function exportarExcel(){
+  let csv = "Cliente,Tipo Servicio,Productos,Mano de obra,Total Servicio,Fecha\n";
+  servicios.forEach(s=>{
+    const listaProductos = s.productos.map(p=>`${p.nombre} x${p.cantidad}`).join(" | ");
+    csv += `${s.cliente},${s.tipoServicio},"${listaProductos}",${s.manoObra},${s.totalServicio},${s.fecha}\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "servicios.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Inicializar
+renderServicios();
+</script>
+
+</body>
+</html>

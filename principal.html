@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menú Principal | GMA Taller</title>
+  <link rel="stylesheet" href="principal.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+</head>
+<body class="menu-principal">
+
+  <header>
+    <h1>Taller de Motos GMA</h1>
+    <p id="usuario-bienvenida"></p>
+  </header>
+
+  <main class="panel">
+    <div class="tarjeta" onclick="window.location.href='inventario.html'">
+      <h3>📦 Inventario</h3>
+      <p>Entradas y salidas de productos</p>
+    </div>
+
+    <div class="tarjeta" onclick="window.location.href='productos.html'">
+      <h3>🧰 Productos</h3>
+      <p>Registrar y actualizar artículos</p>
+    </div>
+
+    <div class="tarjeta" onclick="window.location.href='proveedores.html'">
+      <h3>🚚 Proveedores</h3>
+      <p>Gestión de proveedores</p>
+    </div>
+
+    <div class="tarjeta" onclick="window.location.href='facturacion.html'">
+      <h3>🧾 Servicios</h3>
+      <p>Gstiona servicios y ventas de</p>
+    </div>
+
+    <div class="tarjeta" onclick="window.location.href='dashboard.html'">
+  <h3>📊 Dashboard</h3>
+  <p>Ver inventario, proveedores y facturación centralizados</p>
+</div>
+
+  </main>
+
+ <footer>
+  <button class="cerrar" onclick="cerrarSesion()">Cerrar Sesión</button>
+</footer>
+
+
+  <script>
+    // Recuperar usuario activo
+    const usuario = localStorage.getItem("usuarioActivo");
+
+    // Si no hay usuario, volver al login
+    if (!usuario) {
+      window.location.href = "index.html";
+    } else {
+      document.getElementById("usuario-bienvenida").textContent = "Bienvenido, " + usuario + " 👋";
+    }
+
+    // Cerrar sesión
+    function cerrarSesion() {
+      localStorage.removeItem("usuarioActivo");
+      window.location.href = "index.html";
+    }
+  </script>
+
+</body>
+</html>

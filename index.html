@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>login | GMA taller</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="login-body">
+    <div class="login-container">
+        <img src="imagenes/mto1.png" alt="Logo Taller" class="logo-login">
+        <h1>Inicia sesión</h1>
+        
+        <form id="loginForm" class="form-flotante">
+            <div class="input-group">
+                <input type="text" id="usuario" required />
+                <label for="usuario">Usuario</label>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="contrasena" required />
+                <label for="contrasena">Contraseña</label>
+            </div>
+
+            <button type="submit">Entrar</button>
+        </form>
+
+        <p class="mensaje-error" id="mensajeError"></p>
+    </div>
+
+    <script>
+      const form = document.getElementById("loginForm");
+      form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        iniciarSesion();
+      });
+
+      function iniciarSesion() {
+        const usuario = document.getElementById("usuario").value.trim();
+        const contrasena = document.getElementById("contrasena").value.trim();
+
+        const usuariosValidos = {
+          "Santiago G": "1234",
+          "mecanico": "moto2025",
+          "cliente": "taller"
+        };
+
+        if (usuariosValidos[usuario] && usuariosValidos[usuario] === contrasena) {
+          localStorage.setItem("usuarioActivo", usuario);
+          window.location.href = "principal.html";
+        } else {
+          alert("⚠️ Usuario o contraseña incorrectos");
+        }
+      }
+    </script>
+</body>
+</html>

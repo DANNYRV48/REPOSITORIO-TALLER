@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventario | GMA Taller</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="principal.css">
+<style>
+  /* FONDO CON IMAGEN Y FILTRO OSCURO */
+  body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: white;
+    min-height: 100vh;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: url('imagenes/menum.jpg') no-repeat center center/cover;
+    z-index: -2;
+  }
+  body::after {
+    content:"";
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.6); /* filtro oscuro */
+    z-index: -1;
+  }
+
+  header {
+    text-align: center;
+    padding: 20px;
+    background: rgba(0,0,0,0.5);
+    box-shadow: 0 2px 8px black;
+  }
+  header h1 { margin: 0; font-size: 2.5rem; font-weight: 600; color: #fff;}
+  header p { margin: 5px 0 0 0; font-size: 1rem; color: #ccc; }
+
+  main { padding: 20px; }
+
+  .card { 
+    background: rgba(43,43,43,0.85);
+    border-radius: 15px; 
+    padding: 20px; 
+    text-align: center; 
+    box-shadow: 0 4px 10px #000;
+    margin-bottom: 20px;
+  }
+
+  .botones {
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .botones button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: #e74c3c;
+    color: #fff;
+    font-weight: bold;
+    transition: 0.2s;
+  }
+  .botones button:hover { background: #c0392b; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #fff;
+  }
+  table th, table td { border: 1px solid #555; padding: 8px; text-align: center; }
+  table th { background: #000; color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📦 Inventario Actualizado</h1>
+  <p id="usuario-bienvenida"></p>
+</header>
+
+<main>
+  <!-- Botones -->
+  <div class="botones">
+    <button onclick="window.location.href='dashboard.html'">⬅ Volver al Dashboard</button>
+    <button onclick="imprimirInventario()">🖨 Imprimir Inventario</button>
+    <button onclick="exportarExcel()">📁 Exportar a Excel</button>
+  </div>
+
+  <!-- Tabla inventario -->
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Proveedor</th>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio compra</th>
+          <th>Precio venta</th>
+          <th>Ganancia/u</th>
+          <th>Total Ganancia</th>
+        </tr>
+      </thead>
+      <tbody id="tablaInventario"></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+  const usuario = localStorage.getItem("usuarioActivo");
+  if(!usuario) window.location.href='index.html';
+  else document.getElementById("usuario-bienvenida").textContent="Bienvenido, "+usuario+" 👋";
+
+  let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
+  const tablaInventario = document.getElementById("tablaInventario");
+
+  function mostrarInventarioActualizado(){
+    tablaInventario.innerHTML = "";
+    proveedores.forEach(p=>{
+      if(p.productos && p.productos.length){
+        p.productos.forEach(prod=>{
+          const gananciaU = prod.precioVenta - prod.precioCompra;
+          const totalGanancia = gananciaU * prod.cantidad;
+          tablaInventario.innerHTML += `<tr>
+            <td>${p.nombre}</td>
+            <td>${prod.nombre}</td>
+            <td>${prod.cantidad}</td>
+            <td>${prod.precioCompra}</td>
+            <td>${prod.precioVenta}</td>
+            <td>${gananciaU}</td>
+            <td>${totalGanancia}</td>
+          </tr>`;
+        });
+      }
+    });
+  }
+
+  mostrarInventarioActualizado();
+
+  function imprimirInventario(){
+    window.print();
+  }
+
+  function exportarExcel(){
+    let filas = tablaInventario.querySelectorAll("tr");
+    let csv = "Proveedor,Producto,Cantidad,Precio Compra,Precio Venta,Ganancia/u,Total Ganancia\n";
+
+    let totalCantidad=0, totalGanancia=0;
+
+    filas.forEach(fila => {
+      let celdas = fila.querySelectorAll("td");
+      if(celdas.length>0){
+        let proveedor = celdas[0].innerText;
+        let producto = celdas[1].innerText;
+        let cantidad = parseFloat(celdas[2].innerText);
+        let precioCompra = parseFloat(celdas[3].innerText);
+        let precioVenta = parseFloat(celdas[4].innerText);
+        let gananciaU = parseFloat(celdas[5].innerText);
+        let totalG = parseFloat(celdas[6].innerText);
+
+        totalCantidad += cantidad;
+        totalGanancia += totalG;
+
+        csv += [proveedor, producto, cantidad, precioCompra, precioVenta, gananciaU, totalG].join(",")+"\n";
+      }
+    });
+
+    // Totales generales al final
+    csv += `Totales,,${totalCantidad},,, ,${totalGanancia}\n`;
+
+    let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    let url = URL.createObjectURL(blob);
+    let link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "inventario_gma_completo.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>
+
+</body>
+</html>
